@@ -4,28 +4,27 @@ import './App.css';
 
 import dayjs from 'dayjs';
 
-import io from 'socket.io-client';
 import { type Message } from './data-access';
 
-const socket = io('http://192.168.1.155:3000');
+import { useSocket, useLocalStorage } from './hooks';
 
 function App() {
-  const [username, setUsername] = useState<string>();
   const [messages, setMessages] = useState<Array<Message>>([]);
   const [typer, setTyper] = useState<string>();
   const [message, setMessage] = useState<string>('');
+
+  const socket = useSocket();
 
   useEffect(() => {
     socket.on('messages_updated', (messages: Array<Message>) => {
       setMessages(messages);
     });
-
     socket.on('send_typing', (data) => setTyper(data?.username));
-  }, []);
+  }, [socket]);
 
-  const loggedInName = username || localStorage.getItem('username');
+  const [username, setUsername] = useLocalStorage('username');
 
-  if (!loggedInName) {
+  if (!username) {
     return (
       <div
         style={{
@@ -42,7 +41,6 @@ function App() {
           onSubmit={(e) => {
             e.preventDefault();
             const username = e.currentTarget.username.value;
-            localStorage.setItem('username', username);
             setUsername(username);
             socket.emit('join_room', { username });
           }}
@@ -65,13 +63,10 @@ function App() {
   return (
     <>
       <div>
-        <p>Hi, {loggedInName}!</p>
+        <p>Hi, {username}!</p>
         <button
           onClick={() => {
-            localStorage.removeItem('username');
-            setTimeout(() => {
-              setUsername(undefined);
-            });
+            setUsername(undefined);
           }}
         >
           Log out
@@ -86,7 +81,7 @@ function App() {
         }}
       >
         {messages.map((message) => {
-          const isAuthor = message.author === loggedInName;
+          const isAuthor = message.author === username;
 
           return (
             <div
@@ -127,9 +122,7 @@ function App() {
           onSubmit={(e) => {
             e.preventDefault();
             const content = e.currentTarget.content.value;
-            const author = loggedInName;
-
-            // createMessage({ content, author });
+            const author = username;
 
             socket.emit('send_message', { content, author });
             socket.emit('stop_typing');
@@ -142,7 +135,7 @@ function App() {
             onChange={(e) => {
               setMessage(e.currentTarget.value);
               if (e.currentTarget.value.length > 0) {
-                socket.emit('typing', { username: loggedInName });
+                socket.emit('typing', { username });
               } else {
                 socket.emit('stop_typing');
               }
