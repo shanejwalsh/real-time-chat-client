@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { type Message } from './data-access';
 
 import { useSocket, useLocalStorage } from './hooks';
+import LoginScreen from './components/login-screen';
 
 function App() {
   const [messages, setMessages] = useState<Array<Message>>([]);
@@ -25,39 +26,7 @@ function App() {
   const [username, setUsername] = useLocalStorage('username');
 
   if (!username) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <form
-          style={{
-            gap: '1rem',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            const username = e.currentTarget.username.value;
-            setUsername(username);
-            socket.emit('join_room', { username });
-          }}
-        >
-          <input
-            required
-            name="username"
-            placeholder="What's your name?"
-            style={{
-              padding: '1rem',
-              fontSize: '1.5rem',
-            }}
-          />
-          <button type="submit">Submit</button>
-        </form>
-      </div>
-    );
+    return <LoginScreen setUsername={setUsername} />;
   }
 
   return (
@@ -66,7 +35,7 @@ function App() {
         <p>Hi, {username}!</p>
         <button
           onClick={() => {
-            setUsername(undefined);
+            setUsername(null);
           }}
         >
           Log out
