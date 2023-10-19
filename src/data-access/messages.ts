@@ -26,3 +26,9 @@ export async function createMessage(message: NewMessageReq): Promise<Message> {
   });
   return await response.json();
 }
+
+export async function deleteMessages(): Promise<void> {
+  await fetch(`${messagesUrl}`, {
+    method: 'DELETE',
+  });
+}
